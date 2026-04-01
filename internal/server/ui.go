@@ -1,120 +1,43 @@
 package server
 
 var dashboardHTML = []byte(`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stockyard Saloon</title>
-<style>
-  :root {
-    --bg: #1a1410;
-    --surface: #241c15;
-    --border: #3d2e1e;
-    --rust: #c4622d;
-    --leather: #8b5e3c;
-    --cream: #f5e6c8;
-    --muted: #7a6550;
-    --text: #e8d5b0;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace, sans-serif; min-height: 100vh; }
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
-  .logo { color: var(--rust); font-size: 1.25rem; font-weight: 700; letter-spacing: 0.05em; }
-  .badge { background: var(--rust); color: var(--cream); font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 3px; font-weight: 600; text-transform: uppercase; }
-  main { max-width: 960px; margin: 2rem auto; padding: 0 2rem; }
-  .hero { text-align: center; padding: 3rem 0 2rem; }
-  .hero h1 { font-size: 2rem; color: var(--cream); margin-bottom: 0.5rem; }
-  .hero p { color: var(--muted); font-size: 0.95rem; max-width: 480px; margin: 0 auto; }
-  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 2rem 0; }
-  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; text-align: center; }
-  .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--rust); }
-  .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 1rem; }
-  .card h2 { font-size: 1rem; color: var(--cream); margin-bottom: 1rem; }
-  .tier-box { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .tier { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1rem; }
-  .tier.pro { border-color: var(--rust); }
-  .tier-name { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem; }
-  .tier.pro .tier-name { color: var(--rust); }
-  .tier-desc { font-size: 0.85rem; color: var(--text); }
-  .tier-price { font-size: 0.8rem; color: var(--leather); margin-top: 0.5rem; }
-  footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.75rem; }
-  footer a { color: var(--leather); text-decoration: none; }
-  .endpoint-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  .endpoint-table th { text-align: left; color: var(--muted); padding: 0.5rem; border-bottom: 1px solid var(--border); }
-  .endpoint-table td { padding: 0.5rem; border-bottom: 1px solid var(--border); color: var(--text); }
-  .method { color: var(--rust); font-weight: 600; }
-</style>
-</head>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Stockyard Saloon</title><style>:root{--bg:#1a1410;--surface:#241c15;--border:#3d2e1e;--rust:#c4622d;--cream:#f5e6c8;--muted:#7a6550;--text:#e8d5b0}*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace,sans-serif}header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;gap:1rem}.logo{color:var(--rust);font-size:1.25rem;font-weight:700}.badge{background:var(--rust);color:var(--cream);font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:3px;font-weight:600;text-transform:uppercase}main{max-width:1100px;margin:0 auto;padding:2rem}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}.stat{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.25rem;text-align:center}.stat-value{font-size:1.75rem;font-weight:700;color:var(--rust)}.stat-label{font-size:0.75rem;color:var(--muted);margin-top:0.25rem;text-transform:uppercase}.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:1.5rem;margin-bottom:1rem}.card h2{font-size:0.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem}.form-row{display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap}select,input,textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:0.5rem 0.75rem;border-radius:4px;font-family:inherit;font-size:0.85rem;flex:1}textarea{resize:vertical;min-height:80px;flex:none;width:100%}.btn{background:var(--rust);color:var(--cream);border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;font-family:inherit;font-size:0.85rem;font-weight:600}.btn:hover{opacity:0.85}.btn-sm{padding:0.25rem 0.6rem;font-size:0.75rem}.btn-danger{background:#7a2020}.btn-back{background:var(--surface);border:1px solid var(--border);color:var(--muted)}.board-item{padding:0.75rem;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center}.board-item:hover{background:rgba(196,98,45,0.08)}.board-name{font-weight:600;color:var(--cream)}.thread-item{padding:0.6rem 0;border-bottom:1px solid var(--border);cursor:pointer}.thread-item:hover{background:rgba(196,98,45,0.06)}.thread-title{color:var(--cream);font-weight:600;font-size:0.88rem}.thread-meta{font-size:0.72rem;color:var(--muted)}.post-item{padding:0.75rem;border:1px solid var(--border);border-radius:4px;margin-bottom:0.5rem}.post-author{font-weight:600;color:var(--rust);font-size:0.82rem;margin-bottom:0.3rem}.post-body{font-size:0.85rem;line-height:1.5}.post-meta{font-size:0.7rem;color:var(--muted);margin-top:0.25rem}.empty{color:var(--muted);font-size:0.85rem;padding:1rem 0;text-align:center}</style></head>
 <body>
-<header>
-  <span class="logo">⬡ Stockyard</span>
-  <span style="color:var(--muted);">/</span>
-  <span style="color:var(--cream);font-weight:600;">Saloon</span>
-  <span class="badge">v0.1.0</span>
-</header>
+<header><span class="logo">&#x2B21; Stockyard</span><span style="color:var(--muted)">/</span><span style="color:var(--cream);font-weight:600">Saloon</span><span class="badge">Forum</span></header>
 <main>
-  <div class="hero">
-    <h1>Saloon</h1>
-    <p>Community forum — threads, replies, categories, moderation, no JavaScript framework bloat</p>
-  </div>
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-value" id="stat-items">—</div>
-      <div class="stat-label">Total Items</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">9310</div>
-      <div class="stat-label">Port</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value" id="stat-tier">—</div>
-      <div class="stat-label">Tier</div>
-    </div>
-  </div>
-  <div class="card">
-    <h2>Tier &amp; Limits</h2>
-    <div class="tier-box">
-      <div class="tier">
-        <div class="tier-name">Free</div>
-        <div class="tier-desc">3 categories, 50 threads</div>
-        <div class="tier-price">$0/mo</div>
-      </div>
-      <div class="tier pro">
-        <div class="tier-name">Pro</div>
-        <div class="tier-desc">Unlimited categories and threads</div>
-        <div class="tier-price">$4.99/mo</div>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <h2>API Endpoints</h2>
-    <table class="endpoint-table">
-      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td class="method">GET</td><td>/health</td><td>Health check</td></tr>
-        <tr><td class="method">GET</td><td>/api/version</td><td>Version info</td></tr>
-        <tr><td class="method">GET</td><td>/api/limits</td><td>Current tier limits</td></tr>
-        <tr><td class="method">GET</td><td>/api/items</td><td>List items</td></tr>
-        <tr><td class="method">POST</td><td>/api/items</td><td>Create item</td></tr>
-        <tr><td class="method">GET</td><td>/api/items/{id}</td><td>Get item</td></tr>
-        <tr><td class="method">PUT</td><td>/api/items/{id}</td><td>Update item</td></tr>
-        <tr><td class="method">DELETE</td><td>/api/items/{id}</td><td>Delete item</td></tr>
-      </tbody>
-    </table>
-  </div>
+<div class="stats"><div class="stat"><div class="stat-value" id="s1">0</div><div class="stat-label">Boards</div></div><div class="stat"><div class="stat-value" id="s2">0</div><div class="stat-label">Threads</div></div><div class="stat"><div class="stat-value" id="s3">0</div><div class="stat-label">Posts</div></div></div>
+<div id="view-boards">
+<div class="card"><h2>New Board</h2>
+<div class="form-row"><input id="f-bname" placeholder="Board name"><input id="f-bdesc" placeholder="Description"><button class="btn btn-sm" onclick="addBoard()">Create</button></div></div>
+<div class="card"><h2>Boards</h2><div id="board-list"><div class="empty">No boards yet</div></div></div>
+</div>
+<div id="view-threads" style="display:none">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h2 style="margin:0" id="board-title">Board</h2><button class="btn btn-sm btn-back" onclick="showBoards()">&#x2190; Boards</button></div>
+<div class="form-row"><input id="f-ttitle" placeholder="Thread title"><input id="f-tauthor" placeholder="Your name"><button class="btn btn-sm" onclick="addThread()">New Thread</button></div>
+<div id="thread-list"><div class="empty">No threads</div></div></div>
+</div>
+<div id="view-posts" style="display:none">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h2 style="margin:0" id="thread-title-hdr"></h2><button class="btn btn-sm btn-back" onclick="showThreads()">&#x2190; Threads</button></div>
+<div id="post-list"><div class="empty">No posts</div></div>
+<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem"><h2>Reply</h2><div class="form-row"><input id="f-pauthor" placeholder="Name"><button class="btn btn-sm" onclick="addPost()">Post Reply</button></div><textarea id="f-pbody" rows="4" placeholder="Your reply..."></textarea></div>
+</div>
+</div>
 </main>
-<footer>
-  <a href="https://stockyard.dev">stockyard.dev</a> &mdash; Creator & Small Business &mdash; Apache 2.0
-</footer>
 <script>
-fetch('/api/limits').then(r=>r.json()).then(d=>{
-  document.getElementById('stat-tier').textContent = d.tier.toUpperCase();
-});
-fetch('/api/items').then(r=>r.json()).then(d=>{
-  document.getElementById('stat-items').textContent = Array.isArray(d) ? d.length : '0';
-});
-</script>
-</body>
-</html>`)
+var curBoard=null;var curThread=null;
+function load(){fetch('/api/stats').then(function(r){return r.json()}).then(function(d){document.getElementById('s1').textContent=d.boards||0;document.getElementById('s2').textContent=d.threads||0;document.getElementById('s3').textContent=d.posts||0})}
+function loadBoards(){fetch('/api/boards').then(function(r){return r.json()}).then(function(list){var el=document.getElementById('board-list');el.innerHTML=list.length?list.map(function(b){return'<div class="board-item" onclick="selectBoard('+b.id+',\''+b.name+'\')"><div><div class="board-name">'+b.name+'</div><div style="font-size:0.75rem;color:var(--muted)">'+b.description+'</div></div><span style="color:var(--muted);font-size:0.75rem">'+b.post_count+' threads &nbsp;<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delBoard('+b.id+')">x</button></span></div>'}).join(''):'<div class="empty">No boards yet</div>'})}
+function showBoards(){document.getElementById('view-boards').style.display='block';document.getElementById('view-threads').style.display='none';document.getElementById('view-posts').style.display='none';curBoard=null}
+function showThreads(){document.getElementById('view-threads').style.display='block';document.getElementById('view-posts').style.display='none';curThread=null;loadThreads(curBoard)}
+function selectBoard(id,name){curBoard=id;document.getElementById('board-title').textContent=name;document.getElementById('view-boards').style.display='none';document.getElementById('view-threads').style.display='block';document.getElementById('view-posts').style.display='none';loadThreads(id)}
+function loadThreads(id){fetch('/api/boards/'+id+'/threads').then(function(r){return r.json()}).then(function(list){var el=document.getElementById('thread-list');el.innerHTML=list.length?list.map(function(t){return'<div class="thread-item" onclick="selectThread('+t.id+',\''+t.title.replace(/'/g,'')+'\')"><div class="thread-title">'+(t.pinned?'&#x1F4CC; ':'')+(t.locked?'&#x1F512; ':'')+ t.title+'</div><div class="thread-meta">'+t.author+' &bull; '+t.reply_count+' replies &bull; '+t.created_at.substring(0,10)+' <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();delThread('+t.id+')">x</button></div></div>'}).join(''):'<div class="empty">No threads yet. Start one above.</div>'})}
+function selectThread(id,title){curThread=id;document.getElementById('thread-title-hdr').textContent=title;document.getElementById('view-threads').style.display='none';document.getElementById('view-posts').style.display='block';loadPosts(id)}
+function loadPosts(id){fetch('/api/threads/'+id+'/posts').then(function(r){return r.json()}).then(function(list){var el=document.getElementById('post-list');el.innerHTML=list.length?list.map(function(p){return'<div class="post-item"><div class="post-author">'+p.author+'</div><div class="post-body">'+p.body+'</div><div class="post-meta">'+p.created_at+' <button class="btn btn-sm btn-danger" onclick="delPost('+p.id+')">x</button></div></div>'}).join(''):'<div class="empty">No posts yet</div>'})}
+function addBoard(){var d={name:document.getElementById('f-bname').value.trim(),description:document.getElementById('f-bdesc').value.trim()};if(!d.name)return;fetch('/api/boards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(){document.getElementById('f-bname').value='';document.getElementById('f-bdesc').value='';loadBoards();load()})}
+function delBoard(id){fetch('/api/boards/'+id,{method:'DELETE'}).then(function(){loadBoards();load()})}
+function addThread(){var d={title:document.getElementById('f-ttitle').value.trim(),author:document.getElementById('f-tauthor').value.trim()||'Anonymous'};if(!d.title)return;fetch('/api/boards/'+curBoard+'/threads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(){document.getElementById('f-ttitle').value='';loadThreads(curBoard);load()})}
+function delThread(id){fetch('/api/threads/'+id,{method:'DELETE'}).then(function(){loadThreads(curBoard);load()})}
+function addPost(){var d={author:document.getElementById('f-pauthor').value.trim()||'Anonymous',body:document.getElementById('f-pbody').value.trim()};if(!d.body)return;fetch('/api/threads/'+curThread+'/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(){document.getElementById('f-pbody').value='';loadPosts(curThread);load()})}
+function delPost(id){fetch('/api/posts/'+id,{method:'DELETE'}).then(function(){loadPosts(curThread);load()})}
+load();loadBoards();
+</script></body></html>`)

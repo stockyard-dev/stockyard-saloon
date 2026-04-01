@@ -1,62 +1,18 @@
 package store
-
-import (
-	"database/sql"
-	"fmt"
-	"os"
-	"path/filepath"
-
-	_ "modernc.org/sqlite"
-)
-
-type DB struct {
-	*sql.DB
-}
-
-func Open(dataDir string) (*DB, error) {
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return nil, fmt.Errorf("mkdir: %w", err)
-	}
-	dsn := filepath.Join(dataDir, "saloon.db") + "?_journal_mode=WAL&_busy_timeout=5000"
-	db, err := sql.Open("sqlite", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("open: %w", err)
-	}
-	db.SetMaxOpenConns(1)
-	if err := migrate(db); err != nil {
-		return nil, fmt.Errorf("migrate: %w", err)
-	}
-	return &DB{db}, nil
-}
-
-func migrate(db *sql.DB) error {
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
-        description TEXT,
-        sort_order INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-     );
-     CREATE TABLE IF NOT EXISTS threads (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        category_id INTEGER NOT NULL,
-        author TEXT NOT NULL,
-        title TEXT NOT NULL,
-        body TEXT NOT NULL,
-        pinned INTEGER DEFAULT 0,
-        locked INTEGER DEFAULT 0,
-        reply_count INTEGER DEFAULT 0,
-        view_count INTEGER DEFAULT 0,
-        last_reply_at DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-     );
-     CREATE TABLE IF NOT EXISTS replies (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        thread_id INTEGER NOT NULL,
-        author TEXT NOT NULL,
-        body TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-     );`)
-	return err
-}
+import("database/sql";"fmt";"os";"path/filepath";"time";_ "modernc.org/sqlite")
+type DB struct{*sql.DB}
+type Board struct{ID int64 `json:"id"`;Name string `json:"name"`;Description string `json:"description"`;PostCount int `json:"post_count,omitempty"`;CreatedAt time.Time `json:"created_at"`}
+type Thread struct{ID int64 `json:"id"`;BoardID int64 `json:"board_id"`;BoardName string `json:"board_name,omitempty"`;Title string `json:"title"`;Author string `json:"author"`;Pinned bool `json:"pinned"`;Locked bool `json:"locked"`;ReplyCount int `json:"reply_count"`;LastActivity time.Time `json:"last_activity"`;CreatedAt time.Time `json:"created_at"`}
+type Post struct{ID int64 `json:"id"`;ThreadID int64 `json:"thread_id"`;Author string `json:"author"`;Body string `json:"body"`;CreatedAt time.Time `json:"created_at"`}
+func Open(dataDir string)(*DB,error){if err:=os.MkdirAll(dataDir,0755);err!=nil{return nil,fmt.Errorf("mkdir: %w",err)};dsn:=filepath.Join(dataDir,"saloon.db")+"?_journal_mode=WAL&_busy_timeout=5000";db,err:=sql.Open("sqlite",dsn);if err!=nil{return nil,fmt.Errorf("open: %w",err)};db.SetMaxOpenConns(1);if err:=migrate(db);err!=nil{return nil,fmt.Errorf("migrate: %w",err)};return &DB{db},nil}
+func migrate(db *sql.DB)error{_,err:=db.Exec(`CREATE TABLE IF NOT EXISTS boards(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL UNIQUE,description TEXT DEFAULT '',created_at DATETIME DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS threads(id INTEGER PRIMARY KEY AUTOINCREMENT,board_id INTEGER NOT NULL,title TEXT NOT NULL,author TEXT DEFAULT 'Anonymous',pinned INTEGER DEFAULT 0,locked INTEGER DEFAULT 0,reply_count INTEGER DEFAULT 0,last_activity DATETIME DEFAULT CURRENT_TIMESTAMP,created_at DATETIME DEFAULT CURRENT_TIMESTAMP);CREATE TABLE IF NOT EXISTS posts(id INTEGER PRIMARY KEY AUTOINCREMENT,thread_id INTEGER NOT NULL,author TEXT DEFAULT 'Anonymous',body TEXT NOT NULL,created_at DATETIME DEFAULT CURRENT_TIMESTAMP);CREATE INDEX IF NOT EXISTS thread_board ON threads(board_id,last_activity DESC);CREATE INDEX IF NOT EXISTS post_thread ON posts(thread_id,created_at);`);return err}
+func(db *DB)ListBoards()([]Board,error){rows,err:=db.Query(`SELECT b.id,b.name,b.description,COUNT(t.id),b.created_at FROM boards b LEFT JOIN threads t ON t.board_id=b.id GROUP BY b.id ORDER BY b.name`);if err!=nil{return nil,err};defer rows.Close();var out[]Board;for rows.Next(){var b Board;rows.Scan(&b.ID,&b.Name,&b.Description,&b.PostCount,&b.CreatedAt);out=append(out,b)};return out,nil}
+func(db *DB)CreateBoard(b *Board)error{res,err:=db.Exec(`INSERT INTO boards(name,description)VALUES(?,?)`,b.Name,b.Description);if err!=nil{return err};b.ID,_=res.LastInsertId();return nil}
+func(db *DB)DeleteBoard(id int64)error{_,err:=db.Exec(`DELETE FROM boards WHERE id=?`,id);_,_=db.Exec(`DELETE FROM threads WHERE board_id=?`,id);return err}
+func(db *DB)ListThreads(boardID int64)([]Thread,error){rows,err:=db.Query(`SELECT t.id,t.board_id,COALESCE(b.name,''),t.title,t.author,t.pinned,t.locked,t.reply_count,t.last_activity,t.created_at FROM threads t LEFT JOIN boards b ON b.id=t.board_id WHERE t.board_id=? ORDER BY t.pinned DESC,t.last_activity DESC LIMIT 50`,boardID);if err!=nil{return nil,err};defer rows.Close();var out[]Thread;for rows.Next(){var t Thread;var pinned,locked int;rows.Scan(&t.ID,&t.BoardID,&t.BoardName,&t.Title,&t.Author,&pinned,&locked,&t.ReplyCount,&t.LastActivity,&t.CreatedAt);t.Pinned=pinned==1;t.Locked=locked==1;out=append(out,t)};return out,nil}
+func(db *DB)CreateThread(t *Thread)error{if t.Author==""{t.Author="Anonymous"};res,err:=db.Exec(`INSERT INTO threads(board_id,title,author)VALUES(?,?,?)`,t.BoardID,t.Title,t.Author);if err!=nil{return err};t.ID,_=res.LastInsertId();return nil}
+func(db *DB)DeleteThread(id int64)error{_,err:=db.Exec(`DELETE FROM threads WHERE id=?`,id);_,_=db.Exec(`DELETE FROM posts WHERE thread_id=?`,id);return err}
+func(db *DB)ListPosts(threadID int64)([]Post,error){rows,err:=db.Query(`SELECT id,thread_id,author,body,created_at FROM posts WHERE thread_id=? ORDER BY created_at`,threadID);if err!=nil{return nil,err};defer rows.Close();var out[]Post;for rows.Next(){var p Post;rows.Scan(&p.ID,&p.ThreadID,&p.Author,&p.Body,&p.CreatedAt);out=append(out,p)};return out,nil}
+func(db *DB)CreatePost(p *Post)error{if p.Author==""{p.Author="Anonymous"};res,err:=db.Exec(`INSERT INTO posts(thread_id,author,body)VALUES(?,?,?)`,p.ThreadID,p.Author,p.Body);if err!=nil{return err};p.ID,_=res.LastInsertId();db.Exec(`UPDATE threads SET reply_count=reply_count+1,last_activity=CURRENT_TIMESTAMP WHERE id=?`,p.ThreadID);return nil}
+func(db *DB)DeletePost(id int64)error{_,err:=db.Exec(`DELETE FROM posts WHERE id=?`,id);return err}
+func(db *DB)Stats()(map[string]int,error){var boards,threads,posts int;db.QueryRow(`SELECT COUNT(*) FROM boards`).Scan(&boards);db.QueryRow(`SELECT COUNT(*) FROM threads`).Scan(&threads);db.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&posts);return map[string]int{"boards":boards,"threads":threads,"posts":posts},nil}
