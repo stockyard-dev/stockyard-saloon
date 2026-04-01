@@ -1,0 +1,5 @@
+/saloon
+/data/
+*.db
+*.db-shm
+*.db-wal

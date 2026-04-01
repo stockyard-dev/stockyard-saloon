@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  saloon:
+    build: .
+    ports:
+      - "9310:9310"
+    environment:
+      - PORT=9310
+      - DATA_DIR=/data
+      - SALOON_LICENSE_KEY=
+    volumes:
+      - saloon_data:/data
+    restart: unless-stopped
+volumes:
+  saloon_data:
