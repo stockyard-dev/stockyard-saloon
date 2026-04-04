@@ -35,6 +35,7 @@ patch.Description=existing.Description};if patch.Type==""{
 patch.Type=existing.Type};if patch.LastMessageAt==""{
 patch.LastMessageAt=existing.LastMessageAt};if patch.Status==""{
 patch.Status=existing.Status}
+    if patch.MemberCount==0{patch.MemberCount=existing.MemberCount};if patch.MessageCount==0{patch.MessageCount=existing.MessageCount}
     s.db.Update(&patch);wj(w,200,s.db.Get(patch.ID))
 }
 func(s *Server)del(w http.ResponseWriter,r *http.Request){s.db.Delete(r.PathValue("id"));wj(w,200,map[string]string{"deleted":"ok"})}
